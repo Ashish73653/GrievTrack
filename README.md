@@ -111,6 +111,17 @@ The application is fully compatible with GitHub Codespaces:
 3. Run: `python app.py`
 4. Open forwarded port 5000 in browser
 
+### Testing
+
+Run the test suite to verify utility functions:
+
+```bash
+pip install pytest
+pytest -q
+```
+
+Tests cover canonical payload generation, JSON serialization, hashing, and ID generation.
+
 ## Features & Routes
 
 ### 1. Dashboard (`/dashboard`)
