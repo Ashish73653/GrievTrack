@@ -1,0 +1,187 @@
+/**
+ * Hyperledger Fabric Chaincode Pseudocode
+ * GrievTrack - Hash Anchoring Smart Contract
+ *
+ * This pseudocode demonstrates how the GrievTrack application would
+ * anchor event hashes to a Hyperledger Fabric blockchain network.
+ *
+ * Current Implementation: SQLite ledger_hashes table
+ * Future Implementation: Replace SQLite anchoring with Fabric client calls
+ */
+
+// Smart Contract Structure
+contract GrievTrackChaincode {
+
+    /**
+     * AnchorHash - Store event hash on blockchain
+     *
+     * @param event_id - Unique event identifier
+     * @param complaint_id - Associated complaint identifier
+     * @param event_hash - SHA-256 hash of canonical event payload
+     * @param timestamp - ISO 8601 timestamp of event
+     *
+     * @return ledger_id - Blockchain transaction ID
+     */
+    function AnchorHash(event_id, complaint_id, event_hash, timestamp) {
+        // Validate inputs
+        if (!event_id || !complaint_id || !event_hash || !timestamp) {
+            throw Error("All parameters are required")
+        }
+
+        // Create composite key for ledger storage
+        key = createCompositeKey("event", [complaint_id, event_id])
+
+        // Create ledger entry
+        ledgerEntry = {
+            event_id: event_id,
+            complaint_id: complaint_id,
+            event_hash: event_hash,
+            timestamp: timestamp,
+            anchored_at: getCurrentTimestamp(),
+            anchored_by: getInvokerIdentity()
+        }
+
+        // Store on blockchain ledger
+        putState(key, JSON.stringify(ledgerEntry))
+
+        // Emit event for off-chain listeners
+        emitEvent("HashAnchored", {
+            event_id: event_id,
+            complaint_id: complaint_id,
+            event_hash: event_hash
+        })
+
+        // Return transaction ID
+        return getTransactionID()
+    }
+
+    /**
+     * GetHash - Retrieve anchored hash from blockchain
+     *
+     * @param event_id - Event identifier to query
+     * @param complaint_id - Complaint identifier for composite key
+     *
+     * @return ledgerEntry - Hash record from blockchain
+     */
+    function GetHash(event_id, complaint_id) {
+        // Create composite key
+        key = createCompositeKey("event", [complaint_id, event_id])
+
+        // Query blockchain state
+        ledgerDataBytes = getState(key)
+
+        if (!ledgerDataBytes) {
+            throw Error("Event hash not found on ledger")
+        }
+
+        // Parse and return
+        return JSON.parse(ledgerDataBytes)
+    }
+
+    /**
+     * GetComplaintHistory - Get all event hashes for a complaint
+     *
+     * @param complaint_id - Complaint identifier
+     *
+     * @return array - All event hash records for the complaint
+     */
+    function GetComplaintHistory(complaint_id) {
+        // Query by partial composite key
+        iterator = getStateByPartialCompositeKey("event", [complaint_id])
+
+        results = []
+        while (iterator.hasNext()) {
+            result = iterator.next()
+            results.push(JSON.parse(result.value))
+        }
+
+        return results
+    }
+
+    /**
+     * VerifyIntegrity - Verify event hash matches ledger
+     *
+     * @param event_id - Event identifier
+     * @param complaint_id - Complaint identifier
+     * @param computed_hash - Recomputed hash to verify
+     *
+     * @return boolean - True if hash matches
+     */
+    function VerifyIntegrity(event_id, complaint_id, computed_hash) {
+        ledgerEntry = GetHash(event_id, complaint_id)
+        return ledgerEntry.event_hash === computed_hash
+    }
+}
+
+/**
+ * INTEGRATION ROADMAP
+ *
+ * To swap from SQLite to Hyperledger Fabric:
+ *
+ * 1. Deploy this chaincode to Fabric network
+ * 2. In app.py, replace SQLite ledger_hashes insert with:
+ *    fabric_client.invoke_chaincode(
+ *        "GrievTrackChaincode",
+ *        "AnchorHash",
+ *        [event_id, complaint_id, event_hash, timestamp]
+ *    )
+ *
+ * 3. In audit verification, replace SQLite ledger query with:
+ *    ledger_hash = fabric_client.query_chaincode(
+ *        "GrievTrackChaincode",
+ *        "GetHash",
+ *        [event_id, complaint_id]
+ *    )
+ *
+ * 4. Benefits after migration:
+ *    - Immutable ledger (no SQL tamper possible)
+ *    - Distributed consensus
+ *    - Cryptographic audit trail
+ *    - Multi-organization trust
+ *    - Smart contract automation
+ *
+ * 5. No changes needed to:
+ *    - Canonical payload generation (utils.py)
+ *    - SHA-256 hashing logic
+ *    - Event data model
+ *    - UI/UX flows
+ */
+
+/**
+ * FABRIC CLIENT INTEGRATION EXAMPLE (Python)
+ */
+
+/*
+from hfc.fabric import Client
+
+# Initialize Fabric client
+fabric_client = Client(net_profile="network.yaml")
+fabric_client.new_channel("grievtrack-channel")
+
+# Instead of:
+# cursor.execute('INSERT INTO ledger_hashes ...')
+
+# Use:
+response = fabric_client.chaincode_invoke(
+    requestor=user,
+    channel_name='grievtrack-channel',
+    peers=['peer0.org1.example.com'],
+    args=[event_id, complaint_id, event_hash, timestamp],
+    cc_name='grievtrack',
+    fcn='AnchorHash'
+)
+
+# Instead of:
+# cursor.execute('SELECT event_hash FROM ledger_hashes WHERE event_id = ?')
+
+# Use:
+response = fabric_client.chaincode_query(
+    requestor=user,
+    channel_name='grievtrack-channel',
+    peers=['peer0.org1.example.com'],
+    args=[event_id, complaint_id],
+    cc_name='grievtrack',
+    fcn='GetHash'
+)
+ledger_hash = response['event_hash']
+*/

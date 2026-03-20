@@ -1,0 +1,44 @@
+{
+  "description": "Sample canonical event payload with SHA-256 hash",
+  "use_case": "This payload represents a complaint submission event that would be anchored to the blockchain ledger",
+
+  "canonical_payload": {
+    "actor_id": "CIT001",
+    "complaint_id": "CMP-A1B2C3D4E5F6",
+    "event_id": "EVT-123456789ABC",
+    "event_type": "SUBMIT",
+    "remarks": "Complaint submitted",
+    "timestamp": "2026-03-20T14:30:00.000000+00:00"
+  },
+
+  "canonical_json_string": "{\"actor_id\":\"CIT001\",\"complaint_id\":\"CMP-A1B2C3D4E5F6\",\"event_id\":\"EVT-123456789ABC\",\"event_type\":\"SUBMIT\",\"remarks\":\"Complaint submitted\",\"timestamp\":\"2026-03-20T14:30:00.000000+00:00\"}",
+
+  "sha256_hash": "c8d7a8f4e9b6a5c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9",
+
+  "ledger_entry": {
+    "ledger_id": "auto-increment-id",
+    "event_id": "EVT-123456789ABC",
+    "complaint_id": "CMP-A1B2C3D4E5F6",
+    "event_hash": "c8d7a8f4e9b6a5c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9",
+    "timestamp": "2026-03-20T14:30:00.000000+00:00"
+  },
+
+  "notes": {
+    "deterministic_serialization": "Keys are sorted alphabetically, no whitespace in JSON",
+    "hash_algorithm": "SHA-256 using hashlib in Python",
+    "timestamp_format": "ISO 8601 with UTC timezone",
+    "null_handling": "None/NULL values become empty string in canonical payload",
+    "verification_process": "Recompute hash from event data, compare with ledger_hashes.event_hash"
+  },
+
+  "fabric_integration": {
+    "chaincode_function": "AnchorHash",
+    "parameters": [
+      "EVT-123456789ABC",
+      "CMP-A1B2C3D4E5F6",
+      "c8d7a8f4e9b6a5c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9",
+      "2026-03-20T14:30:00.000000+00:00"
+    ],
+    "return_value": "blockchain_transaction_id"
+  }
+}

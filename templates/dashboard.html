@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - GrievTrack{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Dashboard</h2>
+    <p>System Overview and Metrics</p>
+</div>
+
+<div class="dashboard-cards">
+    <div class="card">
+        <h3>Complaint Summary</h3>
+        <div class="card-stats">
+            <div class="stat">
+                <span class="stat-label">Total</span>
+                <span class="stat-value">{{ summary.complaints.total }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Open</span>
+                <span class="stat-value stat-warning">{{ summary.complaints.open }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Closed</span>
+                <span class="stat-value stat-success">{{ summary.complaints.closed }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Integrity Summary</h3>
+        <div class="card-stats">
+            <div class="stat">
+                <span class="stat-label">Total Events</span>
+                <span class="stat-value">{{ summary.integrity.total_events }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Tampered</span>
+                <span class="stat-value stat-error">{{ summary.integrity.tampered }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Global EIS</span>
+                <span class="stat-value {% if summary.integrity.eis == 100 %}stat-success{% else %}stat-warning{% endif %}">
+                    {{ summary.integrity.eis }}%
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Officer Accountability</h3>
+        <div class="card-stats">
+            <div class="stat">
+                <span class="stat-label">Officers</span>
+                <span class="stat-value">{{ summary.accountability.total_officers }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Delayed</span>
+                <span class="stat-value stat-warning">{{ summary.accountability.delayed }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Avg Response</span>
+                <span class="stat-value">{{ summary.accountability.avg_response_hours }}h</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Audit Performance</h3>
+        <div class="card-stats">
+            <div class="stat">
+                <span class="stat-label">Total Audits</span>
+                <span class="stat-value">{{ summary.audit.total_audits }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Avg CVL</span>
+                <span class="stat-value">{{ summary.audit.avg_cvl }} ms</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Last CVL</span>
+                <span class="stat-value">{{ summary.audit.last_cvl }} ms</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if audit_runs %}
+<div class="charts-section">
+    <h3>System Charts</h3>
+
+    <div class="charts-grid">
+        <div class="chart-container">
+            <canvas id="eisTrendChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="cvlTrendChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+const auditRuns = {{ audit_runs | tojson }};
+
+// Mini EIS Trend
+const eisCtx = document.getElementById('eisTrendChart').getContext('2d');
+new Chart(eisCtx, {
+    type: 'line',
+    data: {
+        labels: auditRuns.map((run, idx) => `${idx + 1}`),
+        datasets: [{
+            label: 'EIS (%)',
+            data: auditRuns.map(run => run.eis),
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: {
+                display: true,
+                text: 'EIS Trend'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+
+// Mini CVL Trend
+const cvlCtx = document.getElementById('cvlTrendChart').getContext('2d');
+new Chart(cvlCtx, {
+    type: 'line',
+    data: {
+        labels: auditRuns.map((run, idx) => `${idx + 1}`),
+        datasets: [{
+            label: 'CVL (ms)',
+            data: auditRuns.map(run => run.cvl_ms),
+            borderColor: 'rgb(255, 159, 64)',
+            backgroundColor: 'rgba(255, 159, 64, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: {
+                display: true,
+                text: 'CVL Trend'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+
+<div class="quick-actions">
+    <h3>Quick Actions</h3>
+    <div class="button-group">
+        <a href="{{ url_for('submit') }}" class="btn btn-primary">Submit New Complaint</a>
+        <a href="{{ url_for('update') }}" class="btn btn-primary">Update Status</a>
+        <a href="{{ url_for('audit') }}" class="btn btn-primary">Run Audit</a>
+    </div>
+</div>
+{% endblock %}
