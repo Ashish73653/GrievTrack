@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Update Status - GrievTrack{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Update Complaint Status</h2>
+    <p>Officer Module - Update grievance status</p>
+</div>
+
+{% if success %}
+<div class="success-box">
+    <h3>Status Updated Successfully!</h3>
+    <div class="info-grid">
+        <div class="info-item">
+            <strong>Complaint ID:</strong> {{ complaint_id }}
+        </div>
+        <div class="info-item">
+            <strong>Status:</strong> Event recorded and hash anchored in ledger
+        </div>
+    </div>
+    <div class="button-group">
+        <a href="{{ url_for('timeline', complaint_id=complaint_id) }}" class="btn btn-primary">View Timeline</a>
+        <a href="{{ url_for('update') }}" class="btn btn-secondary">Update Another</a>
+    </div>
+</div>
+{% else %}
+<form method="POST" class="form-card">
+    <div class="form-group">
+        <label for="complaint_id">Complaint ID *</label>
+        <input type="text" id="complaint_id" name="complaint_id" placeholder="e.g., CMP-ABC123456789" required>
+    </div>
+
+    <div class="form-group">
+        <label for="officer_id">Officer ID *</label>
+        <input type="text" id="officer_id" name="officer_id" placeholder="e.g., OFF001" required>
+    </div>
+
+    <div class="form-group">
+        <label for="status">Status *</label>
+        <select id="status" name="status" required>
+            <option value="">-- Select Status --</option>
+            <option value="ASSIGNED">ASSIGNED</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="CLOSED">CLOSED</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="remarks">Remarks</label>
+        <textarea id="remarks" name="remarks" rows="3" placeholder="Optional notes about this status update"></textarea>
+    </div>
+
+    <div class="button-group">
+        <button type="submit" class="btn btn-primary">Update Status</button>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endif %}
+{% endblock %}

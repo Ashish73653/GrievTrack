@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Timeline - GrievTrack{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Complaint Timeline</h2>
+    <p>Traceability View - Complete event history</p>
+</div>
+
+<div class="complaint-info">
+    <h3>Complaint Details</h3>
+    <div class="info-grid">
+        <div class="info-item">
+            <strong>ID:</strong> {{ complaint['complaint_id'] }}
+        </div>
+        <div class="info-item">
+            <strong>Title:</strong> {{ complaint['title'] }}
+        </div>
+        <div class="info-item">
+            <strong>Category:</strong> {{ complaint['category'] }}
+        </div>
+        <div class="info-item">
+            <strong>Priority:</strong> {{ complaint['priority'] }}
+        </div>
+        <div class="info-item">
+            <strong>Current Status:</strong> <span class="status-badge status-{{ complaint['current_status'] }}">{{ complaint['current_status'] }}</span>
+        </div>
+        <div class="info-item">
+            <strong>Citizen:</strong> {{ complaint['citizen_id'] }}
+        </div>
+    </div>
+    <div class="info-full">
+        <strong>Description:</strong>
+        <p>{{ complaint['description'] }}</p>
+    </div>
+</div>
+
+<div class="events-section">
+    <h3>Event History</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Event ID</th>
+                <th>Event Type</th>
+                <th>Actor</th>
+                <th>Remarks</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in events %}
+            <tr>
+                <td><code>{{ event['event_id'] }}</code></td>
+                <td><span class="status-badge status-{{ event['event_type'] }}">{{ event['event_type'] }}</span></td>
+                <td>{{ event['actor_id'] }}</td>
+                <td>{{ event['remarks'] or '-' }}</td>
+                <td>{{ event['timestamp'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="button-group">
+    <a href="{{ url_for('audit') }}" class="btn btn-primary">Audit This Complaint</a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+{% endblock %}

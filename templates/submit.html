@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Complaint - GrievTrack{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Submit Complaint</h2>
+    <p>Citizen Module - File a new grievance</p>
+</div>
+
+{% if success %}
+<div class="success-box">
+    <h3>Complaint Submitted Successfully!</h3>
+    <div class="info-grid">
+        <div class="info-item">
+            <strong>Complaint ID:</strong> {{ complaint_id }}
+        </div>
+        <div class="info-item">
+            <strong>Event Hash:</strong> <code>{{ event_hash }}</code>
+        </div>
+        <div class="info-item">
+            <strong>Status:</strong> SUBMIT event recorded and hash anchored in ledger
+        </div>
+    </div>
+    <div class="button-group">
+        <a href="{{ url_for('timeline', complaint_id=complaint_id) }}" class="btn btn-primary">View Timeline</a>
+        <a href="{{ url_for('submit') }}" class="btn btn-secondary">Submit Another</a>
+    </div>
+</div>
+{% else %}
+<form method="POST" class="form-card">
+    <div class="form-group">
+        <label for="title">Title *</label>
+        <input type="text" id="title" name="title" required>
+    </div>
+
+    <div class="form-group">
+        <label for="description">Description *</label>
+        <textarea id="description" name="description" rows="4" required></textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="category">Category *</label>
+        <input type="text" id="category" name="category" placeholder="e.g., Infrastructure, Service, Corruption" required>
+    </div>
+
+    <div class="form-group">
+        <label for="priority">Priority *</label>
+        <select id="priority" name="priority" required>
+            <option value="Urgent">Urgent</option>
+            <option value="Normal" selected>Normal</option>
+            <option value="Non-urgent">Non-urgent</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="citizen_id">Citizen ID *</label>
+        <input type="text" id="citizen_id" name="citizen_id" placeholder="e.g., CIT001" required>
+    </div>
+
+    <div class="button-group">
+        <button type="submit" class="btn btn-primary">Submit Complaint</button>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endif %}
+{% endblock %}

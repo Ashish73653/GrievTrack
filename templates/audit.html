@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Audit - GrievTrack{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Auditor Module</h2>
+    <p>Verification, Tamper Detection, and Metrics</p>
+</div>
+
+<form method="POST" class="form-card">
+    <div class="form-group">
+        <label for="complaint_id">Complaint ID *</label>
+        <input type="text" id="complaint_id" name="complaint_id" placeholder="e.g., CMP-ABC123456789" required>
+    </div>
+
+    <div class="button-group">
+        <button type="submit" name="action" value="verify" class="btn btn-primary">Verify Integrity</button>
+        <button type="submit" name="action" value="tamper" class="btn btn-warning">Simulate Tamper</button>
+    </div>
+</form>
+
+{% if verification_results %}
+<div class="audit-results">
+    <h3>Verification Results</h3>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Event ID</th>
+                <th>Event Type</th>
+                <th>Recomputed Hash</th>
+                <th>Ledger Hash</th>
+                <th>Result</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in verification_results %}
+            <tr>
+                <td><code>{{ result.event_id }}</code></td>
+                <td>{{ result.event_type }}</td>
+                <td><code>{{ result.recomputed_hash }}</code></td>
+                <td><code>{{ result.ledger_hash }}</code></td>
+                <td>
+                    {% if result.result == 'MATCH' %}
+                        <span class="badge-success">MATCH</span>
+                    {% else %}
+                        <span class="badge-error">TAMPERED</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if metrics %}
+<div class="metrics-section">
+    <h3>Metrics</h3>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>EIS (Event Integrity Score)</h4>
+            <div class="metric-value {% if metrics.eis == 100 %}metric-success{% else %}metric-warning{% endif %}">
+                {{ metrics.eis }}%
+            </div>
+            <div class="metric-details">
+                <p>Total Events: {{ metrics.total }}</p>
+                <p>Matched: {{ metrics.matched }}</p>
+                <p>Tampered: {{ metrics.tampered }}</p>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <h4>CVL (Compliance Verification Latency)</h4>
+            <div class="metric-value">{{ metrics.cvl_ms }} ms</div>
+            <div class="metric-details">
+                <p>Verification runtime</p>
+            </div>
+        </div>
+
+        {% if metrics.oai.status != 'N/A' %}
+        <div class="metric-card">
+            <h4>OAI (Officer Accountability)</h4>
+            <div class="metric-value {% if metrics.oai.within_sla %}metric-success{% else %}metric-warning{% endif %}">
+                {{ metrics.oai.status }}
+            </div>
+            <div class="metric-details">
+                {% if metrics.oai.response_hours is defined %}
+                <p>Response Time: {{ metrics.oai.response_hours }} hours</p>
+                <p>SLA Threshold: {{ metrics.oai.sla_hours }} hours</p>
+                {% else %}
+                <p>{{ metrics.oai.reason }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+{% if audit_runs %}
+<div class="charts-section">
+    <h3>Audit History Charts</h3>
+
+    <div class="chart-container">
+        <canvas id="eisChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="cvlChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="oaiChart"></canvas>
+    </div>
+</div>
+
+<script>
+const auditRuns = {{ audit_runs | tojson }};
+
+// EIS Chart
+const eisCtx = document.getElementById('eisChart').getContext('2d');
+new Chart(eisCtx, {
+    type: 'line',
+    data: {
+        labels: auditRuns.map((run, idx) => `Run ${idx + 1}`),
+        datasets: [{
+            label: 'EIS (%)',
+            data: auditRuns.map(run => run.eis),
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: {
+                display: true,
+                text: 'Event Integrity Score (EIS) Over Time'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+
+// CVL Chart
+const cvlCtx = document.getElementById('cvlChart').getContext('2d');
+new Chart(cvlCtx, {
+    type: 'line',
+    data: {
+        labels: auditRuns.map((run, idx) => `Run ${idx + 1}`),
+        datasets: [{
+            label: 'CVL (ms)',
+            data: auditRuns.map(run => run.cvl_ms),
+            borderColor: 'rgb(255, 159, 64)',
+            backgroundColor: 'rgba(255, 159, 64, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: {
+                display: true,
+                text: 'Compliance Verification Latency (CVL) Over Time'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// OAI Histogram (matched vs total events)
+const oaiCtx = document.getElementById('oaiChart').getContext('2d');
+new Chart(oaiCtx, {
+    type: 'bar',
+    data: {
+        labels: auditRuns.map((run, idx) => `Run ${idx + 1}`),
+        datasets: [{
+            label: 'Matched Events',
+            data: auditRuns.map(run => run.matched),
+            backgroundColor: 'rgba(75, 192, 192, 0.6)'
+        }, {
+            label: 'Total Events',
+            data: auditRuns.map(run => run.total),
+            backgroundColor: 'rgba(201, 203, 207, 0.6)'
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: {
+                display: true,
+                text: 'Audit History: Matched vs Total Events'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

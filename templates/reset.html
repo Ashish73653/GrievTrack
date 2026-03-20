@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Reset Database - GrievTrack{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Reset Database</h2>
+    <p>Clear all data for demo purposes</p>
+</div>
+
+<div class="warning-box">
+    <h3>Warning</h3>
+    <p>This will delete all complaints, events, and ledger entries. This action cannot be undone.</p>
+</div>
+
+<form method="POST" class="form-card">
+    <div class="button-group">
+        <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to reset the database?')">
+            Confirm Reset
+        </button>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}
